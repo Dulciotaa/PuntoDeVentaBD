@@ -1,0 +1,7 @@
+C:\Users\a\Documents\SharpDevelop Projects\Punto de venta new era\Punto de venta new era\obj\Debug\Punto de venta new era.csprojResolveAssemblyReference.cache
+C:\Users\a\Documents\SharpDevelop Projects\Punto de venta new era\Punto de venta new era\obj\Debug\Punto_de_venta_new_era.MainForm.resources
+C:\Users\a\Documents\SharpDevelop Projects\Punto de venta new era\Punto de venta new era\obj\Debug\Punto de venta new era.csproj.GenerateResource.Cache
+C:\Users\a\Documents\SharpDevelop Projects\Punto de venta new era\Punto de venta new era\bin\Debug\Punto de venta new era.exe
+C:\Users\a\Documents\SharpDevelop Projects\Punto de venta new era\Punto de venta new era\bin\Debug\Punto de venta new era.pdb
+C:\Users\a\Documents\SharpDevelop Projects\Punto de venta new era\Punto de venta new era\obj\Debug\Punto de venta new era.exe
+C:\Users\a\Documents\SharpDevelop Projects\Punto de venta new era\Punto de venta new era\obj\Debug\Punto de venta new era.pdb
