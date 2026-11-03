@@ -1,53 +1,86 @@
 ﻿using System;
 using System.Windows.Forms;
 using System.Data;
-using MySql.Data.MySqlClient; // Asegúrate de tener la referencia de MySQL agregada al proyecto
+using MySql.Data.MySqlClient;
 
 namespace Punto_de_venta_new_era
 {
     public partial class MainForm : Form
     {
-        // Conexión a tu base de datos 'puntoVenta' según tu script
-        private string connectionString = "Server=localhost;Database=puntoVenta;Uid=root;Pwd=13579135ca;";
+        private string connectionString = "Server=localhost;Database=puntoVenta;Uid=root;Pwd=migatoola6;SslMode=None;";
         private string codigoBarrasAcumulado = "";
 
         public MainForm()
         {
             InitializeComponent();
             
-            // Habilitar la lectura de teclas para el escáner de código de barras
             this.KeyPreview = true;
             this.KeyPress += new KeyPressEventHandler(MainForm_KeyPress);
-            
-            // Conectar el botón de Pagar con su evento
             this.btnPagar.Click += new EventHandler(btnPagar_Click);
+
+            dgvDetalles.ReadOnly = false;
+            dgvDetalles.Columns[0].ReadOnly = true;
+            dgvDetalles.Columns[1].ReadOnly = true;
+            dgvDetalles.Columns[2].ReadOnly = true;
+            dgvDetalles.Columns[3].ReadOnly = false;
+            dgvDetalles.Columns[4].ReadOnly = true;
+            dgvDetalles.Columns[5].ReadOnly = true;
+
+            dgvDetalles.CellValueChanged += new DataGridViewCellEventHandler(dgvDetalles_CellValueChanged);
         }
 
-        // --- 1. LECTOR DE CÓDIGO DE BARRAS ---
+        private void dgvDetalles_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex == 3)
+            {
+                DataGridViewRow row = dgvDetalles.Rows[e.RowIndex];
+
+                if (row.Cells[3].Value != null)
+                {
+                    int nuevaCantidad;
+                    bool esNumero = int.TryParse(row.Cells[3].Value.ToString(), out nuevaCantidad);
+
+                    if (esNumero && nuevaCantidad > 0)
+                    {
+                        double precio = Convert.ToDouble(row.Cells[2].Value);
+                        double subtotal = precio * nuevaCantidad;
+                        double iva = subtotal * 0.16;
+                        double importe = subtotal + iva;
+
+                        row.Cells[4].Value = iva;
+                        row.Cells[5].Value = importe;
+
+                        CalcularTotales();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Por favor ingresa una cantidad numérica válida mayor a cero.", "Cantidad Inválida", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        row.Cells[3].Value = 1; 
+                    }
+                }
+            }
+        }
+
         private void MainForm_KeyPress(object sender, KeyPressEventArgs e)
         {
-            // El escáner envía un "Enter" (char 13) cuando termina de leer el código
             if (e.KeyChar == (char)Keys.Enter)
             {
                 if (!string.IsNullOrEmpty(codigoBarrasAcumulado))
                 {
                     BuscarProducto(codigoBarrasAcumulado);
-                    codigoBarrasAcumulado = ""; // Reiniciar para el siguiente escaneo
+                    codigoBarrasAcumulado = ""; 
                 }
             }
             else
             {
-                // Acumular los números que el escáner va escribiendo rápidamente
                 codigoBarrasAcumulado += e.KeyChar;
             }
         }
 
-        // --- 2. BUSCAR EN BD Y AGREGAR A LA TABLA ---
         private void BuscarProducto(string idProducto)
         {
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
-                // Consultamos la tabla 'productos' por su idProducto (Clave)
                 string query = "SELECT Producto, Precio FROM productos WHERE idProducto = @id";
                 MySqlCommand cmd = new MySqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@id", idProducto);
@@ -64,19 +97,10 @@ namespace Punto_de_venta_new_era
                             
                             int cantidad = 1;
                             double subtotalItem = precioUnitario * cantidad;
-                            double ivaItem = subtotalItem * 0.16; // Calculamos el 16% de IVA
+                            double ivaItem = subtotalItem * 0.16; 
                             double importeItem = subtotalItem + ivaItem;
 
-                            // Agregamos la fila al DataGridView (dgvDetalles)
-                            dgvDetalles.Rows.Add(
-                                idProducto, 
-                                nombreProducto, 
-                                precioUnitario, 
-                                cantidad, 
-                                ivaItem, 
-                                importeItem
-                            );
-
+                            dgvDetalles.Rows.Add(idProducto, nombreProducto, precioUnitario, cantidad, ivaItem, importeItem);
                             CalcularTotales();
                         }
                         else
@@ -92,7 +116,6 @@ namespace Punto_de_venta_new_era
             }
         }
 
-        // --- 3. CALCULAR TOTALES DE LA VENTA ---
         private void CalcularTotales()
         {
             double subtotalGeneral = 0;
@@ -103,23 +126,21 @@ namespace Punto_de_venta_new_era
             {
                 if (row.IsNewRow) continue;
 
-                double precio = Convert.ToDouble(row.Cells[2].Value); // colPUnitario
-                int cantidad = Convert.ToInt32(row.Cells[3].Value);   // colCantidad
-                double iva = Convert.ToDouble(row.Cells[4].Value);    // colIVA
-                double importe = Convert.ToDouble(row.Cells[5].Value);// colImporte
+                double precio = Convert.ToDouble(row.Cells[2].Value); 
+                int cantidad = Convert.ToInt32(row.Cells[3].Value);   
+                double iva = Convert.ToDouble(row.Cells[4].Value);    
+                double importe = Convert.ToDouble(row.Cells[5].Value);
 
                 subtotalGeneral += (precio * cantidad);
                 ivaGeneral += iva;
                 totalGeneral += importe;
             }
 
-            // Actualizamos las etiquetas verdes de tu diseño
             lblSubtotalV.Text = "$" + subtotalGeneral.ToString("0.00");
             lblIvaV.Text = "$" + ivaGeneral.ToString("0.00");
             lblTotalV.Text = "$" + totalGeneral.ToString("0.00");
         }
 
-        // --- 4. TRANSACCIÓN PARA GUARDAR LA VENTA ---
         private void btnPagar_Click(object sender, EventArgs e)
         {
             if (dgvDetalles.Rows.Count == 0)
@@ -133,18 +154,15 @@ namespace Punto_de_venta_new_era
                 try
                 {
                     conn.Open();
-                    // Iniciar la transacción para proteger los datos
                     MySqlTransaction tr = conn.BeginTransaction();
 
                     try
                     {
-                        // Obtener los totales generales quitando el símbolo "$"
                         double subTotalTotal = double.Parse(lblSubtotalV.Text.Replace("$", ""));
                         double totalIva = double.Parse(lblIvaV.Text.Replace("$", ""));
                         double total = double.Parse(lblTotalV.Text.Replace("$", ""));
                         DateTime fechaVenta = DateTime.Now;
 
-                        // Insertar cada fila de la tabla en detallesCompra
                         string queryInsert = @"INSERT INTO detallesCompra 
                                              (Fecha, Producto, precioUnitario, subTotal, iva, subTotalTotal, TotalIva, Total, idProducto) 
                                              VALUES 
@@ -169,29 +187,25 @@ namespace Punto_de_venta_new_era
                             cmdInsert.Parameters.AddWithValue("@subTotal", subTotalItem);
                             cmdInsert.Parameters.AddWithValue("@iva", ivaItem);
                             
-                            // Totales de la nota completa (según la estructura de tu BD)
                             cmdInsert.Parameters.AddWithValue("@subTotalTotal", subTotalTotal);
                             cmdInsert.Parameters.AddWithValue("@totalIva", totalIva);
                             cmdInsert.Parameters.AddWithValue("@total", total);
                             
-                            // Llave foránea del producto
                             cmdInsert.Parameters.AddWithValue("@idProducto", Convert.ToInt32(row.Cells[0].Value));
 
                             cmdInsert.ExecuteNonQuery();
                         }
 
-                        // Confirmar la transacción
                         tr.Commit();
                         
                         MessageBox.Show("Venta registrada con éxito.", "Cobro Exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         
-                        // Limpiar la interfaz para la siguiente venta
                         dgvDetalles.Rows.Clear();
                         CalcularTotales();
                     }
                     catch (Exception exBD)
                     {
-                        tr.Rollback(); // Si algo falla, se deshace todo
+                        tr.Rollback(); 
                         MessageBox.Show("Error al guardar la venta: " + exBD.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }

@@ -34,6 +34,9 @@
     <Reference Include="MySql.Data">
       <HintPath>..\..\..\..\..\..\Program Files %28x86%29\MySQL\MySQL Connector NET 26.10\MySql.Data.dll</HintPath>
     </Reference>
+    <Reference Include="MySql.Data">
+      <HintPath>..\..\..\..\Downloads\mysql.data\MySql.Data.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
