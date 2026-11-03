@@ -31,6 +31,9 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic">
+      <HintPath>..\..\..\..\Downloads\microsoft.visualbasic.10.3.0\lib\netcore50\Microsoft.VisualBasic.dll</HintPath>
+    </Reference>
     <Reference Include="MySql.Data">
       <HintPath>..\..\..\..\..\..\Program Files %28x86%29\MySQL\MySQL Connector NET 26.10\MySql.Data.dll</HintPath>
     </Reference>
